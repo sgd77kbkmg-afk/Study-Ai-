@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study AI Pro</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui;
+  background: #343541;
+  color: white;
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #202123;
+  padding: 15px;
+}
+
+.sidebar h2 {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.sidebar button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #2a2b32;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sidebar button:hover {
+  background: #3a3b42;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat */
+.chat {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.message {
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.user { background: #444654; }
+.bot { background: #3a3b42; }
+
+/* Input */
+.input-area {
+  display: flex;
+  padding: 10px;
+  background: #40414f;
+}
+
+input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  margin-right: 10px;
+}
+
+button.send {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #10a37f;
+  color: white;
+  cursor: pointer;
+}
+
+/* Flashcards */
+.cards {
+  display: none;
+  padding: 20px;
+}
+
+.card {
+  background: #444654;
+  padding: 30px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  min-height: 120px;
+}
+
+.controls button {
+  margin: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>Study AI</h2>
+  <button onclick="loadEnglish()">English</button>
+  <button onclick="loadMaths()">Maths</button>
+  <button onclick="showCards()">Flashcards</button>
+  <button onclick="summarise()">Summarise</button>
+  <button onclick="modelAnswer()">Model Answer</button>
+</div>
+
+<div class="main">
+
+  <div class="chat" id="chat"></div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="input-area">
+    <input id="input" placeholder="Ask or paste text...">
+    <button class="send" onclick="sendMessage()">Send</button>
+  </div>
+
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const cardsDiv = document.getElementById("cards");
+
+let cards = [];
+let index = 0;
+
+/* Chat */
+function sendMessage() {
+  let input = document.getElementById("input");
+  let text = input.value;
+  if (!text) return;
+
+  chat.innerHTML += `<div class="message user">${text}</div>`;
+
+  let response = localAI(text);
+
+  setTimeout(() => {
+    chat.innerHTML += `<div class="message bot">${response}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 300);
+
+  input.value = "";
+}
+
+/* Local AI */
+function localAI(text) {
+  text = text.toLowerCase();
+
+  if (text.includes("pete"))
+    return "PETE = Point, Evidence, Technique, Explain.";
+
+  if (text.includes("paper 1"))
+    return "Paper 1 = Creative reading and writing.";
+
+  if (text.includes("fraction"))
+    return "Fractions represent parts of a whole.";
+
+  return "Basic response. Add API for real intelligence.";
+}
+
+/* Subjects */
+function loadEnglish() {
+  chat.innerHTML = "<div class='message bot'>English ready: Paper 1, Paper 2, PETE, Writing.</div>";
+}
+
+function loadMaths() {
+  chat.innerHTML = "<div class='message bot'>Maths ready: Fractions, Algebra, Ratio.</div>";
+}
+
+/* Flashcards */
+function showCards() {
+  cardsDiv.style.display = "block";
+  chat.style.display = "none";
+
+  cards = [
+    {q:"PETE?", a:"Point, Evidence, Technique, Explain"},
+    {q:"Paper 1?", a:"Creative reading & writing"},
+    {q:"50% of 200?", a:"100"},
+    {q:"3/4 decimal?", a:"0.75"}
+  ];
+
+  index = 0;
+  renderCard();
+}
+
+function renderCard() {
+  let c = cards[index];
+
+  cardsDiv.innerHTML = `
+    <div class="card" onclick="flipCard()">
+      <div id="front">${c.q}</div>
+      <div id="back" style="display:none">${c.a}</div>
+    </div>
+
+    <div class="controls">
+      <button onclick="know()">I Know</button>
+      <button onclick="dontKnow()">Don't Know</button>
+      <button onclick="nextCard()">Next</button>
+    </div>
+  `;
+}
+
+function flipCard() {
+  let f = document.getElementById("front");
+  let b = document.getElementById("back");
+
+  if (b.style.display === "none") {
+    b.style.display = "block";
+    f.style.display = "none";
+  } else {
+    b.style.display = "none";
+    f.style.display = "block";
+  }
+}
+
+function nextCard() {
+  index = (index + 1) % cards.length;
+  renderCard();
+}
+
+/* Progress tracking */
+function know() {
+  saveProgress(true);
+  nextCard();
+}
+
+function dontKnow() {
+  saveProgress(false);
+  nextCard();
+}
+
+function saveProgress(result) {
+  let stats = JSON.parse(localStorage.getItem("progress")) || {good:0, bad:0};
+
+  if (result) stats.good++;
+  else stats.bad++;
+
+  localStorage.setItem("progress", JSON.stringify(stats));
+}
+
+/* Tools */
+function summarise() {
+  let text = document.getElementById("input").value;
+  chat.innerHTML += `<div class="message bot">Summary: ${text.slice(0,100)}...</div>`;
+}
+
+function modelAnswer() {
+  chat.innerHTML += `<div class="message bot">
+  Structured Answer:<br>
+  Point → Answer<br>
+  Evidence → Example<br>
+  Explain → Detail
+  </div>`;
+}
+</script>
+
+</body>
+</html>
